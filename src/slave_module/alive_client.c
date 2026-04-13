@@ -54,7 +54,12 @@ void make_alivesocket(void)
     memset(&aliveslave_srv, 0, sizeof(aliveslave_srv));
 
     const char *ip = uci_get(gsystemmanager_cfg, "common", "server_ip");
-    const int port = atoi(uci_get(gsystemmanager_cfg, "common", "alive_port"));
+    const char *port_str = uci_get(gsystemmanager_cfg, "common", "alive_port");
+    if (!port_str) {
+        printf("port_str NULL\n");
+        return -1;
+    }
+    int port = atoi(port_str);
 
     aliveslave_srv.sin_family = AF_INET;
     aliveslave_srv.sin_port = htons(port);                 //  포트

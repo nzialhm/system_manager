@@ -11,7 +11,12 @@ void image_client_start(void)
     imageslave_sock = socket(AF_INET, SOCK_STREAM, 0);
 
     const char *ip = uci_get(gsystemmanager_cfg, "common", "server_ip");
-    const int port = atoi(uci_get(gsystemmanager_cfg, "common", "image_port"));
+    const char *port_str = uci_get(gsystemmanager_cfg, "common", "image_port");
+    if (!port_str) {
+        printf("port_str NULL\n");
+        return -1;
+    }
+    int port = atoi(port_str);
 
     memset(&imageslave_srv, 0, sizeof(imageslave_srv));
     imageslave_srv.sin_family = AF_INET;

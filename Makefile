@@ -48,8 +48,8 @@ endef
 TARGET_CFLAGS += -g -O0
 TARGET_CFLAGS += \
     -I$(PKG_BUILD_DIR)/src \
-	-I$(PKG_BUILD_DIR)/common \
-	-I$(PKG_BUILD_DIR)/config \
+	-I$(PKG_BUILD_DIR)/src/common \
+	-I$(PKG_BUILD_DIR)/src/config \
     -I$(PKG_BUILD_DIR)/src/slave_module \
     -I$(PKG_BUILD_DIR)/src/master_module \
     -I$(PKG_BUILD_DIR)/src/ubus
@@ -117,6 +117,11 @@ define Package/system_manager/install
 	@echo "[system_manager] Installing..."
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/system_manager $(1)/usr/bin/system_manager
+	chmod 0755 $(1)/usr/bin/system_manager
+	$(CP) ./src/config/systemmanager_config $(1)/usr/bin/systemmanager_config
+
+	# $(INSTALL_DIR) $(1)/etc/init.d
+	# $(INSTALL_BIN) ./files/system_manager.init $(1)/etc/init.d/system_manager
 endef
 
 $(eval $(call BuildPackage,system_manager))

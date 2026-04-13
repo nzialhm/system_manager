@@ -41,7 +41,12 @@ int image_server_init(void)
 
     memset(&imagemaster_srv, 0, sizeof(imagemaster_srv));
 
-    const int port = atoi(uci_get(gsystemmanager_cfg, "common", "image_port"));
+    const char *port_str = uci_get(gsystemmanager_cfg, "common", "image_port");
+    if (!port_str) {
+        printf("port_str NULL\n");
+        return -1;
+    }
+    int port = atoi(port_str);
 
     imagemaster_srv.sin_family = AF_INET;
     imagemaster_srv.sin_port = htons(port);

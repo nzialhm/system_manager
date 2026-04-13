@@ -46,9 +46,9 @@ int main(int argc, char **argv)
 
         /* mode 설정 */
         if (!strcmp(_nct11af_mode, "ap"))
-            mode = MASTER_MODE;
+            mode = (char*)MASTER_MODE;
         else if (!strcmp(_nct11af_mode, "sta"))
-            mode = SLAVE_MODE;
+            mode = (char*)SLAVE_MODE;
         else {
             printf("[ERROR] unknown nct11af_mode: %s\n", _nct11af_mode);
             return -1;
@@ -66,11 +66,13 @@ int main(int argc, char **argv)
         printf("[CONFIG] mode=%s model=%s\n", mode, model);
     }
 
+    memset(&systemmanager_cfg, 0, sizeof(systemmanager_cfg));
     if(uci_load(SLAVECONFIG_PATH, &systemmanager_cfg)==-1)
     {
         printf("config file error \n");
         return -1;
     }
+    printf("port=%s\n", uci_get(gsystemmanager_cfg, "common", "alive_port"));
    
    uloop_init();
 

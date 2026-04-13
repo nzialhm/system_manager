@@ -218,7 +218,12 @@ int alive_server_start(void)
 
     memset(&alivemaster_srv, 0, sizeof(alivemaster_srv));
 
-    const int port = atoi(uci_get(gsystemmanager_cfg, "common", "alive_port"));
+    const char *port_str = uci_get(gsystemmanager_cfg, "common", "alive_port");
+    if (!port_str) {
+        printf("port_str NULL\n");
+        return -1;
+    }
+    int port = atoi(port_str);
 
     alivemaster_srv.sin_family = AF_INET;
     alivemaster_srv.sin_port = htons(port);
