@@ -1,0 +1,26 @@
+*.o
+*.a
+*.swp
+*.depend
+*.map
+*.srec
+*.bin
+*.img
+.config*
+*.log
+log
+tags
+cscope.out
+autoconf.h
+# Python
+###################################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+###################################
+#
+###################################
+.venv27/
+.vscode/
+.ipynb_checkpoints/

@@ -1,0 +1,168 @@
+# rules.mk 를 최상단에 무조건 삽입해야 한다. 
+include $(TOPDIR)/rules.mk
+
+# 패키지에 대한 기본 정보를 설정한다. 
+PKG_NAME:=system_manager
+PKG_VERSION:=1.0
+PKG_RELEASE:=1
+
+# 팩키지를 어느 디렉토리에서 빌드할 것인지 지정한다.
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+
+# 팩키지의 소스가 어디인지를 지정한다.
+PKG_SRC_DIR:=$(TOPDIR)/package/nct11af/system_manager/src
+
+# tmp/.config-package.in 을 자동 생성하는데 사용된다.
+# help 항목으로 저장됨.
+PKG_MAINTAINER:=lucas <lucas@nzia.com>
+
+# package.mk 를 반드시 삽입해야 한다.
+include $(INCLUDE_DIR)/package.mk
+
+
+
+###################################################################################################
+###################################################################################################
+###################################################################################################
+# For create "tmp/.config-package.in"
+
+# 아래 정보는, tmp/.config-package.in 을 자동 생성하는데 사용된다.
+# SECTION : 별 의미 없는 것으로 보임.
+# CATEGORY : "ap" 라는 상위 메뉴에 소속됨을 알림. => menu "ap" 로 변환됨
+# TITLE : "................................... ap application" 로 변환됨
+# URL : help 항목으로 저장됨.
+define Package/system_manager/Default
+  SECTION:=nct11af
+  CATEGORY:=nct11af
+  TITLE:=system manager
+  DEPENDS:=+libhpa +libgps +libtemp +libcheck_tx_power +libubox +libubus +libblobmsg-json
+  URL:=nzia.net
+endef
+
+# tmp/.config-package.in 을 자동 생성하는데 사용된다.
+# help 항목으로 저장됨.
+define Package/system_manager/Default/description
+ This is just sample for "How to add new project to buildroot"
+endef
+
+# tmp/.config-package.in 생성과정에서 필요한 정보를 정의한 "Package/system_manager/Default" 를 호출해준다.
+define Package/system_manager
+$(call Package/system_manager/Default)
+endef
+
+
+# tmp/.config-package.in 생성과정에서 필요한 정보를 정의한 "Package/system_manager/Default" 를 호출해준다.
+define Package/system_manager/description
+$(call Package/system_manager/Default/description)
+endef
+
+
+###################################################################################################
+###################################################################################################
+###################################################################################################
+# 실제 빌드에 관련된 동작을 관장하는 부분입니다.
+
+# 소스 설치등의 컴파일 이전에 필요한 내용을 준비합니다.
+# define Build/Prepare
+# 	@echo "[S]=========================================="
+# 	@echo "[package/nct11af/system_manager] : Build/Prepare"
+# 	(mkdir -p $(BUILD_DIR)/$(PKG_NAME); cd $(BUILD_DIR)/$(PKG_NAME); lndir $(PKG_SRC_DIR))
+# 	@echo "[E] Build/Prepare===================="
+# endef
+
+define Build/Prepare
+	@echo "[system_manager] Prepare"
+
+	rm -rf $(PKG_BUILD_DIR)
+	mkdir -p $(PKG_BUILD_DIR)
+
+	cp -r $(PKG_SRC_DIR)/* $(PKG_BUILD_DIR)/
+endef
+
+# ./configure 를 지원하는 소스일 경우엔, 아래 부분에서 진행하게 됩니다.
+# 이 예제에서는 사용하지 않습니다.
+define Build/Configure
+	@echo "[S]=========================================="
+	@echo "[package/nct11af/system_manager] : Build/Configure"
+endef
+
+# .config 에서 지정한 모델 정보를 cflags 로 전달합니다.
+ifdef CONFIG_MODEL_WSC_7620
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_7620
+endif
+
+ifdef CONFIG_MODEL_WSC_IMX6
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_IMX6
+endif
+
+ifdef CONFIG_MODEL_WSC_MV7K
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_MV7K
+endif
+
+ifdef CONFIG_MODEL_WSC_X86-64
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_X86-64
+endif
+
+ifdef CONFIG_MODEL_WSC_X86
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_X86
+endif
+
+ifdef CONFIG_MODEL_WSC_IMX6ULL
+TARGET_CFLAGS += -DCONFIG_MODEL_WSC_IMX6ULL
+endif
+# 빌드시 사용할 추가 설정등을 지정합니다.
+TARGET_CFLAGS += \
+  -I$(STAGING_DIR)/usr/include 
+TARGET_LDFLAGS += -lhpa -lgps -ltemp -lcheck_tx_power \
+                  -lubox -lubus -lblobmsg_json
+
+MAKE_FLAGS += \
+  CFLAGS="$(TARGET_CFLAGS)" \
+  LDFLAGS="$(TARGET_LDFLAGS)" \
+  -j4
+
+# 아래 섹션을 사용할 경우엔, 컴파일 방법을 원하는 대로 설정할 수 있습니다.
+#define Build/Compile
+#	@echo "[S]=========================================="
+#	@echo "[package/nct11af/system_manager] : Build/Compile"
+#	@echo "[E] Build/Compile============================"
+#endef
+define Build/Compile
+	@echo "[system_manager] Build/Compile (Debug mode)"
+
+	# 디버그 심볼 포함, 최적화 제거
+	# $(TARGET_CC)와 $(TARGET_CFLAGS)는 Buildroot 내부 변수
+	$(TARGET_CC) \
+		-I$(STAGING_DIR)/usr/include \
+		-I$(STAGING_DIR)/usr/include/libubox \
+		-I$(PKG_BUILD_DIR)/../../libgps/src \
+		-I$(PKG_BUILD_DIR)/../../libcheck_tx_power/src \
+		$(PKG_BUILD_DIR)/system_manager.c \
+		$(PKG_BUILD_DIR)/master.c \
+		$(PKG_BUILD_DIR)/slave.c \
+		$(PKG_BUILD_DIR)/slave_module/alive_client.c \
+		$(PKG_BUILD_DIR)/slave_module/image_client.c \
+		$(PKG_BUILD_DIR)/master_module/image_server.c \
+		$(PKG_BUILD_DIR)/ubus/ubus.c \
+		-L$(STAGING_DIR)/usr/lib \
+		-lhpa -lgps -ltemp -lcheck_tx_power -lubox -lubus -lblobmsg_json \
+		-pthread \
+		-o $(PKG_BUILD_DIR)/system_manager
+
+	@echo "[system_manager] Build finished (Debug symbols included)"
+endef
+
+# 컴파일이 끝난후, rootfs 나 staging dir 에 설치하는 방법을 지정하는 곳입니다.
+define Package/system_manager/install
+	@echo "[S]=========================================="
+	@echo "[package/nct11af/system_manager] : Package/system_manager/install"
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/system_manager $(1)/usr/bin/system_manager
+	@echo "[E] Package/system_manager/install===================="
+endef
+
+
+# 위에서 설정한 모든 내용은, 아래의 BuildPackage 함수를 호출해야 동작되며,
+# ARG 로 프로젝트의 이름(디렉토리 이름) 을 전달해 주어야 합니다.
+# 여기서 전달된 이름은 tmp/.config-package.in 에서 "config PACKAGE_system_manager" 로 변환됩니다.
+$(eval $(call BuildPackage,system_manager))
