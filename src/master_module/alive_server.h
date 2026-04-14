@@ -29,6 +29,8 @@ struct device_info {
     char height_type[8];
     float height;
 
+    int slave_key;
+
     time_t last_seen;
 
     int online;   // 1: online, 0: offline
@@ -55,7 +57,7 @@ static LIST_HEAD(device_list);
 int alive_server_start(void);
 
 /* device 업데이트 (외부에서 쓸 수도 있어서 export) */
-void update_device(struct sockaddr_in *cli, char *msg);
+// void update_device(struct sockaddr_in *cli, char *msg);
 
 void cleanup_devices_cb(struct uloop_timeout *t);
 

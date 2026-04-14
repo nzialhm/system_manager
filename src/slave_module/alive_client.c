@@ -3,12 +3,13 @@
 #include "../common/common.h"
 #include "alive_client.h"
 
-#define MSG_STR "SERIALNUMBER=%s KSDEVICEEMISSIONPOWER=%s KSCERTID=%s KSDEVICETYPE=%s MODELID=%s LATITUDE=%s LONGITUDE=%s HEIGHTTYPE=%s HEIGHT=%s"
+#define MSG_STR "SERIALNUMBER=%s KSDEVICEEMISSIONPOWER=%s KSCERTID=%s KSDEVICETYPE=%s MODELID=%s LATITUDE=%s LONGITUDE=%s HEIGHTTYPE=%s HEIGHT=%s SLAVEKEY=%d"
 #define ALIVESENDBUF_SIZE 1024
 #define ALIVERECVBUF_SIZE 128
 
 static int aliveslave_sock = 0;
 static struct sockaddr_in aliveslave_srv;
+static slave_key = 0;
 
 void recv_alive_ack(int sock)
 {
@@ -26,6 +27,7 @@ void recv_alive_ack(int sock)
     }
 
     buf[n] = '\0';
+    slave_key++;
 
     printf("[SLAVE] ACK from %s: %s\n",
            inet_ntoa(srv.sin_addr), buf);
@@ -97,7 +99,8 @@ void send_alive(void)
             geo_lati,
             geo_long,
             ant_heightType,
-            ant_height
+            ant_height,
+            slave_key
     );
 
     sendto(aliveslave_sock, msg, strlen(msg), 0,

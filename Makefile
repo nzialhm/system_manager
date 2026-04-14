@@ -99,6 +99,7 @@ define Build/Compile
 		$(PKG_BUILD_DIR)/src/slave.c \
 		$(PKG_BUILD_DIR)/src/config/config_reader.c \
 		$(PKG_BUILD_DIR)/src/config/uci_reader.c \
+		$(PKG_BUILD_DIR)/src/config/uci_cmd.c \
 		$(PKG_BUILD_DIR)/src/slave_module/alive_client.c \
 		$(PKG_BUILD_DIR)/src/slave_module/image_client.c \
 		$(PKG_BUILD_DIR)/src/master_module/image_server.c \

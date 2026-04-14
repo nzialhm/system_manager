@@ -63,6 +63,7 @@ SYSTEM_MANAGER_OBJS = \
   master_module/alive_server.o \
   config/config_reader.o \
   config/uci_reader.o \
+  config/uci_cmd.o \
 	ubus/ubus.o
 
 # ==========================
