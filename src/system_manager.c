@@ -17,8 +17,15 @@ static struct uci_config systemmanager_cfg;
 #define SLAVECONFIG_PATH "/nct11af/system_manager/systemmanager_config"
 struct uci_config* gsystemmanager_cfg = &systemmanager_cfg;
 
+//ubus 
+char g_mode[32];
+char g_model[32];
+
 int main(int argc, char **argv)
 {
+    memset(g_mode, 0, sizeof(g_mode));
+    memset(g_model, 0, sizeof(g_model));
+    
     const char *model = NULL;
     const char *mode = NULL;
 
@@ -91,6 +98,9 @@ int main(int argc, char **argv)
     } else {
         slave_init(model);
     }
+
+    strncpy(g_mode, mode, strlen(mode));
+    strncpy(g_model, model, strlen(model));
 
     uloop_run();
     uloop_done();

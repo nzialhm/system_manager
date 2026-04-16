@@ -201,6 +201,9 @@ void cleanup_devices_cb(struct uloop_timeout *t)
             list_del(&d->list);
             free(d);
         }
+        else {
+            d->online = d->online + 1;
+        }
     }
 
     /* 5초마다 반복 */
