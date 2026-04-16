@@ -6,6 +6,7 @@
 static int imagemaster_sock = 0;
 static struct sockaddr_in imagemaster_srv;
 
+LIST_HEAD(device_list);
 static void image_accept_cb(struct uloop_fd *u, unsigned int events)
 {
     while (1) {

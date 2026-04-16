@@ -10,7 +10,7 @@ int uci_get_value(const char *package, const char *section, const char *option, 
 int uci_set_value(const char *package, const char *section, const char *option, const char *value);
 
 // commit
-int uci_commit(const char *package);
+int uci_commit_package(const char *package);
 
 #endif //__UCICMD_H_
 

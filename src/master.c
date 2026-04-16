@@ -22,12 +22,6 @@ int master_init(const char *model)
         return -1;
     }
 
-    /* ubus 초기화 */
-    if (ubus_init() < 0) {
-        printf("ubus_init failed\n");
-        return -1;
-    }
-
     /* device cleanup timer */
     cleanup_timer.cb = cleanup_devices_cb;
     uloop_timeout_set(&cleanup_timer, MASTER_ALIVECHECK_TIME);

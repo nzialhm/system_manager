@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <time.h>
 
-#include <libubox/uloop.h>
 #include <libubox/list.h>
 
 
@@ -42,8 +41,6 @@ struct device_info {
  * 
  * ------------------------------ */
 extern int image_server_init(void);
-extern int ubus_init(void);
-
 
 /* ------------------------------
  * 전역
@@ -51,7 +48,8 @@ extern int ubus_init(void);
 static struct uloop_fd sock_fd;
 static struct uloop_timeout cleanup_timer;
 
-static LIST_HEAD(device_list);
+// 수정
+extern struct list_head device_list;
 
 /* 외부에서 호출 */
 int alive_server_start(void);

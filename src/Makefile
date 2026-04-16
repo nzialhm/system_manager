@@ -46,6 +46,7 @@ LDFLAGS += -L$(STAGING_DIR)/usr/lib \
     -lgps \
     -ltemp \
     -lubus \
+    -luci \
     -lblobmsg_json \
     -lubox -ljson-c \
     -lpthread          # pthread 링크

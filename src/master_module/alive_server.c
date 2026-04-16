@@ -2,7 +2,6 @@
 #include "../std.h"
 #include "../common/common.h"
 #include "alive_server.h"
-#include <time.h>
 
 /* ------------------------------
  * 설정값

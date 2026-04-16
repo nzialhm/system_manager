@@ -17,7 +17,7 @@ define Package/system_manager/Default
   SECTION:=nct11af
   CATEGORY:=nct11af
   TITLE:=system manager
-  DEPENDS:=+libhpa +libgps +libtemp +libcheck_tx_power +libubox +libubus +libblobmsg-json
+  DEPENDS:=+libhpa +libgps +libtemp +libcheck_tx_power +libubox +libubus +libblobmsg-json +libuci
   URL:=nzia.net
 endef
 
@@ -106,7 +106,7 @@ define Build/Compile
 		$(PKG_BUILD_DIR)/src/master_module/alive_server.c \
 		$(PKG_BUILD_DIR)/src/ubus/ubus.c \
 		-L$(STAGING_DIR)/usr/lib \
-		-lubox -lubus -lblobmsg_json \
+		-lubox -lubus -lblobmsg_json -luci \
 		-pthread \
 		-o $(PKG_BUILD_DIR)/system_manager
 endef

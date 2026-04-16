@@ -5,7 +5,6 @@
 
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <libubox/uloop.h>
 
 #define SLAVE_ALIVECHECK_TIME 1000
 

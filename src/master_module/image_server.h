@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/socket.h>
-#include <libubox/uloop.h>
 
 static struct uloop_fd img_fd;
 

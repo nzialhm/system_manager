@@ -1,6 +1,7 @@
 // ubus.c
 #include "../std.h"
 #include "ubus.h"
+#include "../master_module/alive_server.h"   // device_info
 
 static struct ubus_context *ctx;
 
@@ -48,27 +49,53 @@ static int handle_request(struct ubus_context *ctx,
     if (!strcmp(method, "status")) {
         blobmsg_add_string(&b, "status", "running");
     }
-    else if (!strcmp(method, "start")) {
-        blobmsg_add_string(&b, "result", "started");
-    }
-    else if (!strcmp(method, "stop")) {
-        blobmsg_add_string(&b, "result", "stopped");
-    }
-    else if (!strcmp(method, "restart")) {
-        blobmsg_add_string(&b, "result", "restarted");
-    }
     else if (!strcmp(method, "config")) {
         blobmsg_add_string(&b, "cmd", cmd);
         blobmsg_add_string(&b, "value", value);
         blobmsg_add_string(&b, "result", "config updated");
     }
-    else if (!strcmp(method, "info")) {
-        blobmsg_add_string(&b, "version", "1.0.0");
-        blobmsg_add_string(&b, "name", "system_manager");
-    }
     else {
         blobmsg_add_string(&b, "error", "unknown method");
     }
+
+    ubus_send_reply(ctx, req, b.head);
+    blob_buf_free(&b);
+
+    return 0;
+}
+
+static int get_devices(struct ubus_context *ctx,
+                       struct ubus_object *obj,
+                       struct ubus_request_data *req,
+                       const char *method,
+                       struct blob_attr *msg)
+{
+    struct blob_buf b = {};
+    blob_buf_init(&b, 0);
+
+    void *arr = blobmsg_open_array(&b, "devices");
+
+    struct device_info *d;
+
+    list_for_each_entry(d, &device_list, list) {
+        void *obj = blobmsg_open_table(&b, NULL);
+
+        blobmsg_add_string(&b, "serial", d->serial);
+        blobmsg_add_string(&b, "model", d->model);
+        blobmsg_add_string(&b, "cert_id", d->cert_id);
+        blobmsg_add_string(&b, "type", d->type);
+        blobmsg_add_string(&b, "ip", d->ip);
+
+        blobmsg_add_double(&b, "lat", d->lat);
+        blobmsg_add_double(&b, "lon", d->lon);
+
+        blobmsg_add_string(&b, "height_type", d->height_type);
+        blobmsg_add_double(&b, "height", d->height);
+
+        blobmsg_close_table(&b, obj);
+    }
+
+    blobmsg_close_array(&b, arr);
 
     ubus_send_reply(ctx, req, b.head);
     blob_buf_free(&b);
@@ -81,11 +108,8 @@ static int handle_request(struct ubus_context *ctx,
  * ========================= */
 static const struct ubus_method methods[] = {
     UBUS_METHOD_NOARG("status",  handle_request),
-    UBUS_METHOD_NOARG("start",   handle_request),
-    UBUS_METHOD_NOARG("stop",    handle_request),
-    UBUS_METHOD_NOARG("restart", handle_request),
-    UBUS_METHOD("config", policy, handle_request),
-    UBUS_METHOD_NOARG("info",    handle_request),
+    UBUS_METHOD("config", handle_request, policy),
+    UBUS_METHOD_NOARG("devices", get_devices),
 };
 
 static struct ubus_object_type obj_type =
@@ -109,5 +133,6 @@ void ubus_init(void)
         return;
     }
 
+    ubus_add_uloop(ctx);   //추가해야함
     ubus_add_object(ctx, &obj);
 }

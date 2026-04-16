@@ -1,9 +1,8 @@
 // system_manager.c
 #include "std.h"
-#include "../common/common.h"
-#include "../config/config_reader.h"
-#include <libubox/uloop.h>
-#include <libubus.h>
+#include "common/common.h"
+#include "config/config_reader.h"
+#include "ubus/ubus.h"
 
 #define MASTER_MODE "master"
 #define SLAVE_MODE "slave"
@@ -36,29 +35,37 @@ int main(int argc, char **argv)
     if (!model || !mode) {
         printf("[INFO] Using config values\n");
 
-        char* _nct11af_mode = config_get(&g_cfg, "nct11af_mode");
-        char* _serialnum = config_get(&g_cfg, "serialnum");
+        char nct11af_mode[32] = {0};
+        char serialnum[64] = {0};
 
-        if (!_nct11af_mode || !_serialnum) {
-            printf("[ERROR] config missing\n");
+        /* UCI에서 읽기 */
+        if (uci_get_value("wireless", "default_nct11af1", "mode",
+                        nct11af_mode, sizeof(nct11af_mode)) < 0) {
+            printf("[ERROR] failed to get wireless mode\n");
+            return -1;
+        }
+
+        if (uci_get_value("system", "@system[0]", "serialnum",
+                        serialnum, sizeof(serialnum)) < 0) {
+            printf("[ERROR] failed to get serialnum\n");
             return -1;
         }
 
         /* mode 설정 */
-        if (!strcmp(_nct11af_mode, "ap"))
+        if (!strcmp(nct11af_mode, "ap"))
             mode = (char*)MASTER_MODE;
-        else if (!strcmp(_nct11af_mode, "sta"))
+        else if (!strcmp(nct11af_mode, "sta"))
             mode = (char*)SLAVE_MODE;
         else {
-            printf("[ERROR] unknown nct11af_mode: %s\n", _nct11af_mode);
+            printf("[ERROR] unknown nct11af_mode: %s\n", nct11af_mode);
             return -1;
         }
 
         /* model 추출 (앞 4자리) */
-        static char model_buf[16];  // static으로 유지
+        static char model_buf[16];
         memset(model_buf, 0, sizeof(model_buf));
 
-        strncpy(model_buf, _serialnum, 4);
+        strncpy(model_buf, serialnum, 4);
         model_buf[4] = '\0';
 
         model = model_buf;
@@ -84,8 +91,6 @@ int main(int argc, char **argv)
     } else {
         slave_init(model);
     }
-
-    ubus_add_uloop(ubus_get_ctx());
 
     uloop_run();
     uloop_done();
