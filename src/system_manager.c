@@ -23,6 +23,9 @@ char g_model[32];
 
 int main(int argc, char **argv)
 {
+    char ip[MAX_IP_LEN];
+    char serverip[MAX_IP_LEN];
+
     memset(g_mode, 0, sizeof(g_mode));
     memset(g_model, 0, sizeof(g_model));
     

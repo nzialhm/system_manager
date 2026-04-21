@@ -95,6 +95,8 @@ define Build/Compile
 		-I$(STAGING_DIR)/usr/include \
 		-I$(STAGING_DIR)/usr/include/libubox \
 		$(PKG_BUILD_DIR)/src/system_manager.c \
+		$(PKG_BUILD_DIR)/src/server_adress.c \
+		$(PKG_BUILD_DIR)/src/apip.c \
 		$(PKG_BUILD_DIR)/src/master.c \
 		$(PKG_BUILD_DIR)/src/slave.c \
 		$(PKG_BUILD_DIR)/src/config/config_reader.c \

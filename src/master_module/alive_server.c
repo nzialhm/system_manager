@@ -57,13 +57,16 @@ static void parse_alive(char *msg, struct device_info *dev)
             snprintf(dev->serial, sizeof(dev->serial), "%s", token + 13);
 
         else if (strncmp(token, "MODELID=", 8) == 0)
-            snprintf(dev->model, sizeof(dev->model), "%s", token + 8);
+            snprintf(dev->model_id, sizeof(dev->model_id), "%s", token + 8);
 
         else if (strncmp(token, "KSCERTID=", 9) == 0)
             snprintf(dev->cert_id, sizeof(dev->cert_id), "%s", token + 9);
 
         else if (strncmp(token, "KSDEVICETYPE=", 13) == 0)
             snprintf(dev->type, sizeof(dev->type), "%s", token + 13);
+
+        else if (strncmp(token, "KSDEVICEEMISSIONPOWER=", 22) == 0)
+            dev->power = atoi(token + 22);
 
         else if (strncmp(token, "LATITUDE=", 9) == 0)
             dev->lat = atof(token + 9);
@@ -111,11 +114,11 @@ static int update_device(struct sockaddr_in *cli, char *msg)
     if (dev) {
         /* 안전 복사 */
         snprintf(dev->serial, sizeof(dev->serial), "%s", tmp.serial);
-        snprintf(dev->model, sizeof(dev->model), "%s", tmp.model);
+        snprintf(dev->model_id, sizeof(dev->model_id), "%s", tmp.model_id);
         snprintf(dev->cert_id, sizeof(dev->cert_id), "%s", tmp.cert_id);
         snprintf(dev->type, sizeof(dev->type), "%s", tmp.type);
         snprintf(dev->ip, sizeof(dev->ip), "%s", tmp.ip);
-
+        dev->power = tmp.power;
         dev->lat = tmp.lat;
         dev->lon = tmp.lon;
         dev->height = tmp.height;

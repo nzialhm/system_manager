@@ -2,6 +2,7 @@
 #include "../std.h"
 #include "../common/common.h"
 #include "alive_client.h"
+#include "../apip.h"
 
 #define MSG_STR "SERIALNUMBER=%s KSDEVICEEMISSIONPOWER=%s KSCERTID=%s KSDEVICETYPE=%s MODELID=%s LATITUDE=%s LONGITUDE=%s HEIGHTTYPE=%s HEIGHT=%s SLAVEKEY=%d"
 #define ALIVESENDBUF_SIZE 1024
@@ -55,7 +56,18 @@ void make_alivesocket(void)
 
     memset(&aliveslave_srv, 0, sizeof(aliveslave_srv));
 
-    const char *ip = uci_get(gsystemmanager_cfg, "common", "server_ip");
+    const char *interface_name = "nct11af1";
+    const char *interface = uci_get(gsystemmanager_cfg, "common", "server_interface");
+    if(interface == NULL){
+        interface = interface_name;
+    }
+
+    char serverip[MAX_IP_LEN];
+    memset(serverip, 0, sizeof(serverip));
+    // if (get_gateway_ip("nct11af1", serverip, sizeof(serverip)) == -1) {
+    if (get_gateway_ip(interface, serverip, sizeof(serverip)) == -1) {
+        printf("AP IP: %s\n", serverip);
+    } 
     const char *port_str = uci_get(gsystemmanager_cfg, "common", "alive_port");
     if (!port_str) {
         printf("port_str NULL\n");
@@ -65,7 +77,7 @@ void make_alivesocket(void)
 
     aliveslave_srv.sin_family = AF_INET;
     aliveslave_srv.sin_port = htons(port);                 //  포트
-    aliveslave_srv.sin_addr.s_addr = inet_addr(ip);        //  IP
+    aliveslave_srv.sin_addr.s_addr = inet_addr(serverip);        //  IP
 }
 
 void close_alivesocket(void)

@@ -16,20 +16,17 @@
 
 struct device_info {
     char serial[64];
-    char model[64];
+    char model_id[64];
     char cert_id[64];
     char type[64];
-
-    char ip[32];
-
+    int power;
     double lat;
     double lon;
-
     char height_type[8];
     float height;
 
+    char ip[32];
     int slave_key;
-
     time_t last_seen;
 
     int online;   // 1: online, 0: offline

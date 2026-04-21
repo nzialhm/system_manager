@@ -2,6 +2,7 @@
 #include "../std.h"
 #include "../common/common.h"
 #include "image_client.h"
+#include "../apip.h"
 
 static int imageslave_sock = 0;
 static struct sockaddr_in imageslave_srv;
@@ -10,7 +11,19 @@ void image_client_start(void)
 {
     imageslave_sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    const char *ip = uci_get(gsystemmanager_cfg, "common", "server_ip");
+    const char *interface_name = "nct11af1";
+    const char *interface = uci_get(gsystemmanager_cfg, "common", "server_interface");
+    if(interface == NULL){
+        interface = interface_name;
+    }
+    
+    char serverip[MAX_IP_LEN];
+    memset(serverip, 0, sizeof(serverip));
+    // if (get_gateway_ip("nct11af1", serverip, sizeof(serverip)) == -1) {
+    if (get_gateway_ip(interface, serverip, sizeof(serverip)) == -1) {
+        printf("AP IP: %s\n", serverip);
+    } 
+
     const char *port_str = uci_get(gsystemmanager_cfg, "common", "image_port");
     if (!port_str) {
         printf("port_str NULL\n");
@@ -21,7 +34,7 @@ void image_client_start(void)
     memset(&imageslave_srv, 0, sizeof(imageslave_srv));
     imageslave_srv.sin_family = AF_INET;
     imageslave_srv.sin_port = htons(port);
-    imageslave_srv.sin_addr.s_addr = inet_addr(ip);
+    imageslave_srv.sin_addr.s_addr = inet_addr(serverip);
 
     if (connect(imageslave_sock, (struct sockaddr *)&imageslave_srv, sizeof(imageslave_srv)) == 0) {
         printf("Request image update\n");

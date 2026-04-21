@@ -84,17 +84,31 @@ static int get_devices(struct ubus_context *ctx,
     list_for_each_entry(d, &device_list, list) {
         void *obj = blobmsg_open_table(&b, NULL);
 
+        char buf[64];  // 숫자 → 문자열 변환용
+
         blobmsg_add_string(&b, "serial", d->serial);
-        blobmsg_add_string(&b, "model", d->model);
+        blobmsg_add_string(&b, "model", d->model_id);
         blobmsg_add_string(&b, "cert_id", d->cert_id);
         blobmsg_add_string(&b, "type", d->type);
         blobmsg_add_string(&b, "ip", d->ip);
 
-        blobmsg_add_double(&b, "lat", d->lat);
-        blobmsg_add_double(&b, "lon", d->lon);
+        // power (int → string)
+        snprintf(buf, sizeof(buf), "%u", d->power);
+        blobmsg_add_string(&b, "power", buf);
+
+        // lat (double → string)
+        snprintf(buf, sizeof(buf), "%.6f", d->lat);
+        blobmsg_add_string(&b, "lat", buf);
+
+        // lon (double → string)
+        snprintf(buf, sizeof(buf), "%.6f", d->lon);
+        blobmsg_add_string(&b, "lon", buf);
 
         blobmsg_add_string(&b, "height_type", d->height_type);
-        blobmsg_add_double(&b, "height", d->height);
+
+        // height (double → string)
+        snprintf(buf, sizeof(buf), "%.2f", d->height);
+        blobmsg_add_string(&b, "height", buf);
 
         blobmsg_close_table(&b, obj);
     }

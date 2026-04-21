@@ -7,12 +7,31 @@ USE_PROCD=1
 
 start_service() {
 
-    # 네트워크 준비 대기
-    while ! ubus call network.interface.lan status | grep -q '"up": true'; do
+    IFACE="nct11af1"
+    TIMEOUT=60
+    START_TIME=$(date +%s)
+
+    echo "[paws] waiting for $IFACE" > /dev/console
+
+    while true; do
+        if ifconfig "$IFACE" 2>/dev/null | grep -q "inet addr:"; then
+            echo "[paws] $IFACE is up" > /dev/console
+            break
+        fi
+
         sleep 2
+
+        NOW=$(date +%s)
+        ELAPSED=$((NOW - START_TIME))
+
+        if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+            echo "[paws] timeout, starting anyway" > /dev/console
+            break
+        fi
     done
+
     procd_open_instance
     procd_set_param command /usr/bin/system_manager
-    # procd_set_param respawn
+    procd_set_param respawn
     procd_close_instance
 }
