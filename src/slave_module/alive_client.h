@@ -8,6 +8,11 @@
 
 #define SLAVE_ALIVECHECK_TIME 1000
 
+struct slave_channel {
+    char serial[64];
+    int channel_id;
+};
+
 static struct uloop_timeout alive_timer;
 
 void send_alive(void);

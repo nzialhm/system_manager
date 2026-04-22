@@ -24,6 +24,7 @@ struct device_info {
     double lon;
     char height_type[8];
     float height;
+    int channel_id;
 
     char ip[32];
     int slave_key;

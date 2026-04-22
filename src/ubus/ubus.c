@@ -19,18 +19,35 @@ struct ubus_context *ubus_get_ctx(void)
 enum {
     ARG_CMD,
     ARG_VALUE,
+    ARG_SERIAL,
+    ARG_CHANNEL,
     __ARG_MAX,
 };
 
 static const struct blobmsg_policy policy[__ARG_MAX] = {
     [ARG_CMD]   = { .name = "cmd",   .type = BLOBMSG_TYPE_STRING },
     [ARG_VALUE] = { .name = "value", .type = BLOBMSG_TYPE_STRING },
+    [ARG_SERIAL]  = { .name = "serial",  .type = BLOBMSG_TYPE_STRING },
+    [ARG_CHANNEL] = { .name = "channel", .type = BLOBMSG_TYPE_INT32 },
 };
+
+static int update_device_channel(const char *serial, int channel)
+{
+    struct device_info *d;
+    list_for_each_entry(d, &device_list, list) {
+        if (!strcmp(d->serial, serial)) {
+            d->channel_id = channel;
+            return 0;  // 성공
+        }
+    }
+
+    return -1; // 못 찾음
+}
 
 /* =========================
  * 공통 처리 함수
  * ========================= */
-static int handle_request(struct ubus_context *ctx,
+static int commonslave(struct ubus_context *ctx,
                           struct ubus_object *obj,
                           struct ubus_request_data *req,
                           const char *method,
@@ -43,20 +60,31 @@ static int handle_request(struct ubus_context *ctx,
 
     const char *cmd   = tb[ARG_CMD]   ? blobmsg_get_string(tb[ARG_CMD])   : "";
     const char *value = tb[ARG_VALUE] ? blobmsg_get_string(tb[ARG_VALUE]) : "";
+    const char *serial  = tb[ARG_SERIAL]  ? blobmsg_get_string(tb[ARG_SERIAL])  : NULL;
+    int channel         = tb[ARG_CHANNEL] ? blobmsg_get_u32(tb[ARG_CHANNEL])    : -1;
 
     blob_buf_init(&b, 0);
 
     /* =========================
      * method 기준 분기
      * ========================= */
-    if (!strcmp(method, "status")) {
-        blobmsg_add_string(&b, "mode", g_mode);
-        blobmsg_add_string(&b, "model", g_model);
-    }
-    else if (!strcmp(method, "config")) {
+    if (!strcmp(method, "config")) {
         blobmsg_add_string(&b, "cmd", cmd);
         blobmsg_add_string(&b, "value", value);
         blobmsg_add_string(&b, "result", "config updated");
+    }
+    else if (!strcmp(method, "slavechannel")) {
+        /* channel 변경 요청 */
+        if (serial && channel >= 0) {
+            if (update_device_channel(serial, channel) == 0) {
+                blobmsg_add_string(&b, "sucess", serial);
+            } else {
+                blobmsg_add_string(&b, "error", "device not found");
+            }
+        }
+        else {
+            blobmsg_add_string(&b, "error", "invalid arguments");
+        }
     }
     else {
         blobmsg_add_string(&b, "error", "unknown method");
@@ -155,8 +183,8 @@ static int get_deviceslist(struct ubus_context *ctx,
  * 메서드 등록 (6개)
  * ========================= */
 static const struct ubus_method methods[] = {
-    UBUS_METHOD_NOARG("status",  handle_request),
-    UBUS_METHOD("config", handle_request, policy),
+    UBUS_METHOD("config", commonslave, policy),
+    UBUS_METHOD("slavechannel", commonslave, policy),
     UBUS_METHOD_NOARG("devices", get_devices),
     UBUS_METHOD_NOARG("deviceslist", get_deviceslist),
 };

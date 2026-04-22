@@ -14,7 +14,7 @@
 
 static int alivemaster_sock = 0;
 static struct sockaddr_in alivemaster_srv;
-#define MSGACK_STR "ACKMSG=%s SLAVEKEY=%d "
+#define MSGACK_STR "ACKMSG=%s,SERIALNUMBER=%s,CHANNELID=%d,SLAVEKEY=%d"
 
 static void send_alive_ack(int sock, struct sockaddr_in *cli, int _slave_key)
 {
@@ -23,6 +23,8 @@ static void send_alive_ack(int sock, struct sockaddr_in *cli, int _slave_key)
     snprintf(msg, sizeof(msg),
             MSGACK_STR,
             "OK",
+            "TEMP1234",
+            0,
             _slave_key
             );
     
@@ -50,7 +52,7 @@ static struct device_info* find_device(const char *serial)
  * ------------------------------ */
 static void parse_alive(char *msg, struct device_info *dev)
 {
-    char *token = strtok(msg, " ");
+    char *token = strtok(msg, ",");
 
     while (token) {
         if (strncmp(token, "SERIALNUMBER=", 13) == 0)
@@ -83,7 +85,7 @@ static void parse_alive(char *msg, struct device_info *dev)
         else if (strncmp(token, "SLAVEKEY=", 9) == 0)
             dev->slave_key = atoi(token + 9);
 
-        token = strtok(NULL, " ");
+        token = strtok(NULL, ",");
     }
 }
 

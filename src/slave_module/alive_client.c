@@ -4,13 +4,35 @@
 #include "alive_client.h"
 #include "../apip.h"
 
-#define MSG_STR "SERIALNUMBER=%s KSDEVICEEMISSIONPOWER=%s KSCERTID=%s KSDEVICETYPE=%s MODELID=%s LATITUDE=%s LONGITUDE=%s HEIGHTTYPE=%s HEIGHT=%s SLAVEKEY=%d"
+#define MSG_STR "SERIALNUMBER=%s,KSDEVICEEMISSIONPOWER=%s,KSCERTID=%s,KSDEVICETYPE=%s,MODELID=%s,LATITUDE=%s,LONGITUDE=%s,HEIGHTTYPE=%s,HEIGHT=%s,SLAVEKEY=%d"
 #define ALIVESENDBUF_SIZE 1024
 #define ALIVERECVBUF_SIZE 128
 
 static int aliveslave_sock = 0;
 static struct sockaddr_in aliveslave_srv;
 static slave_key = 0;
+
+struct slave_channel chinfo;
+/* ------------------------------
+ * alive 메시지 파싱
+ * ------------------------------ */
+static void parseslave_alive(char *msg, struct slave_channel *dev)
+{
+    char *token = strtok(msg, ",");
+
+    while (token) {
+        if (strncmp(token, "SERIALNUMBER=", 13) == 0){
+            snprintf(dev->serial, sizeof(dev->serial), "%s", token + 13);
+            printf("[SLAVE] ACK from SERIALNUMBER : %s\n", dev->serial);
+        }
+        else if (strncmp(token, "CHANNELID=", 10) == 0){
+            dev->channel_id = atoi(token + 10);
+            printf("[SLAVE] ACK from CHANNELID : %d\n", dev->channel_id);
+        }
+
+        token = strtok(NULL, ",");
+    }
+}
 
 void recv_alive_ack(int sock)
 {
@@ -28,6 +50,8 @@ void recv_alive_ack(int sock)
     }
 
     buf[n] = '\0';
+
+    parseslave_alive(buf, &chinfo);
     slave_key++;
 
     printf("[SLAVE] ACK from %s: %s\n",
