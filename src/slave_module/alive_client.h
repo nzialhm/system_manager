@@ -11,6 +11,8 @@
 struct slave_channel {
     char serial[64];
     int channel_id;
+    int pawsnew;
+    int useable;
 };
 
 static struct uloop_timeout alive_timer;

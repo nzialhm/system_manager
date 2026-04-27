@@ -14,18 +14,19 @@
 
 static int alivemaster_sock = 0;
 static struct sockaddr_in alivemaster_srv;
-#define MSGACK_STR "ACKMSG=%s,SERIALNUMBER=%s,CHANNELID=%d,SLAVEKEY=%d"
+#define MSGACK_STR "ACKMSG=%s,SERIALNUMBER=%s,CHANNELID=%d,SLAVEKEY=%d,USEABLE=%d"
 
-static void send_alive_ack(int sock, struct sockaddr_in *cli, int _slave_key)
+static void send_alive_ack(int sock, struct sockaddr_in *cli, struct device_info *dev)
 {
     char msg[MSGACKBUF_SIZE];
     memset(&msg, 0, sizeof(msg));
     snprintf(msg, sizeof(msg),
             MSGACK_STR,
             "OK",
-            "TEMP1234",
-            0,
-            _slave_key
+            dev->serial,
+            dev->channel_id,
+            dev->slave_key,
+            dev->useable
             );
     
     sendto(sock, msg, strlen(msg), 0,
@@ -92,9 +93,8 @@ static void parse_alive(char *msg, struct device_info *dev)
 /* ------------------------------
  * device 업데이트
  * ------------------------------ */
-static int update_device(struct sockaddr_in *cli, char *msg)
+static struct device_info*  update_device(struct sockaddr_in *cli, char *msg)
 {
-    int _slave_key = 0;
     struct device_info tmp;
     memset(&tmp, 0, sizeof(tmp));
 
@@ -108,7 +108,7 @@ static int update_device(struct sockaddr_in *cli, char *msg)
     /* 필수 방어 */
     if (tmp.serial[0] == '\0') {
         printf("[WARN] SERIALNUMBER missing\n");
-        return _slave_key;
+        return NULL;
     }
 
     struct device_info *dev = find_device(tmp.serial);
@@ -125,7 +125,7 @@ static int update_device(struct sockaddr_in *cli, char *msg)
         dev->lon = tmp.lon;
         dev->height = tmp.height;
         dev->slave_key = tmp.slave_key;
-        _slave_key = dev->slave_key;
+ 
         snprintf(dev->height_type, sizeof(dev->height_type), "%s", tmp.height_type);
 
         dev->online = 1;
@@ -135,7 +135,7 @@ static int update_device(struct sockaddr_in *cli, char *msg)
     } else {
         dev = malloc(sizeof(*dev));
         if (!dev)
-            return _slave_key;
+            return dev;
 
         memset(dev, 0, sizeof(*dev));
         memcpy(dev, &tmp, sizeof(tmp));
@@ -143,16 +143,16 @@ static int update_device(struct sockaddr_in *cli, char *msg)
         INIT_LIST_HEAD(&dev->list);
 
         dev->online = 1;
+        dev->pawsnew = 1;
+        dev->useable = 1;
 
         dev->last_seen = time(NULL);
 
         list_add_tail(&dev->list, &device_list);
 
-        _slave_key = dev->slave_key;
-
         printf("[NEW] %s (%s)\n", dev->serial, dev->ip);
     }
-    return _slave_key;
+    return dev;
 }
 
 /* ------------------------------
@@ -179,12 +179,12 @@ static void alive_recv_cb(struct uloop_fd *u, unsigned int events)
 
         buf[n] = '\0';
 
-        int _slave_key = update_device(&cli, buf);
+        struct device_info *dev = update_device(&cli, buf);
 
-        send_alive_ack(u->fd, &cli, _slave_key);
+        send_alive_ack(u->fd, &cli, dev);
 
         printf("[MASTER] Alive from %s: %s : SLAVEKEY=%d\n",
-        inet_ntoa(cli.sin_addr), buf, _slave_key);
+        inet_ntoa(cli.sin_addr), buf, dev->slave_key);
     }
 }
 

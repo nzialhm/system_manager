@@ -28,6 +28,13 @@ int main(int argc, char **argv)
 
     memset(g_mode, 0, sizeof(g_mode));
     memset(g_model, 0, sizeof(g_model));
+
+     memset(&systemmanager_cfg, 0, sizeof(systemmanager_cfg));
+    if(uci_load(SLAVECONFIG_PATH, &systemmanager_cfg)==-1)
+    {
+        printf("config file error \n");
+        return -1;
+    }
     
     const char *model = NULL;
     const char *mode = NULL;
@@ -48,8 +55,18 @@ int main(int argc, char **argv)
         char nct11af_mode[32] = {0};
         char serialnum[64] = {0};
 
+        char nct11af_name_buf[32] = {0};
+        char *tmp = uci_get(gsystemmanager_cfg, "common", "mode_name");
+
+        if (tmp == NULL) {
+            printf("[ERROR] failed wireless mode name\n");
+            strncpy(nct11af_name_buf, "default_nct11af1", sizeof(nct11af_name_buf) - 1);
+        } else {
+            strncpy(nct11af_name_buf, tmp, sizeof(nct11af_name_buf) - 1);
+        }
+
         /* UCI에서 읽기 */
-        if (uci_get_value("wireless", "default_nct11af1", "mode",
+        if (uci_get_value("wireless", nct11af_name_buf, "mode",
                         nct11af_mode, sizeof(nct11af_mode)) < 0) {
             printf("[ERROR] failed to get wireless mode\n");
             return -1;
@@ -74,8 +91,10 @@ int main(int argc, char **argv)
         /* model 추출 (앞 4자리) */
         static char model_buf[16];
         memset(model_buf, 0, sizeof(model_buf));
-
-        strncpy(model_buf, serialnum, 4);
+        char *token = strtok(serialnum, "-");
+        if (token != NULL) {
+            strncpy(model_buf, token, sizeof(model_buf) - 1);
+        }
         model_buf[4] = '\0';
 
         model = model_buf;
@@ -83,12 +102,6 @@ int main(int argc, char **argv)
         printf("[CONFIG] mode=%s model=%s\n", mode, model);
     }
 
-    memset(&systemmanager_cfg, 0, sizeof(systemmanager_cfg));
-    if(uci_load(SLAVECONFIG_PATH, &systemmanager_cfg)==-1)
-    {
-        printf("config file error \n");
-        return -1;
-    }
     printf("port=%s\n", uci_get(gsystemmanager_cfg, "common", "alive_port"));
    
    uloop_init();

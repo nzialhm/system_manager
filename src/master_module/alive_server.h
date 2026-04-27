@@ -31,6 +31,8 @@ struct device_info {
     time_t last_seen;
 
     int online;   // 1: online, 0: offline
+    int pawsnew;   // 1: new, 0: old
+    int useable;   // 1: use, 0: not use
 
     struct list_head list;
 };

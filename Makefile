@@ -123,8 +123,8 @@ define Package/system_manager/install
 	chmod 0755 $(1)/usr/bin/system_manager
 	$(CP) ./src/config/systemmanager_config $(1)/usr/bin/systemmanager_config
 
-	# $(INSTALL_DIR) $(1)/etc/init.d
-	# $(INSTALL_BIN) ./files/system_manager.init $(1)/etc/init.d/system_manager
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/system_manager.init $(1)/etc/init.d/system_manager
 endef
 
 $(eval $(call BuildPackage,system_manager))

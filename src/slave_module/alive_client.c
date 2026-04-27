@@ -3,6 +3,7 @@
 #include "../common/common.h"
 #include "alive_client.h"
 #include "../apip.h"
+#include "../config/uci_cmd.h"
 
 #define MSG_STR "SERIALNUMBER=%s,KSDEVICEEMISSIONPOWER=%s,KSCERTID=%s,KSDEVICETYPE=%s,MODELID=%s,LATITUDE=%s,LONGITUDE=%s,HEIGHTTYPE=%s,HEIGHT=%s,SLAVEKEY=%d"
 #define ALIVESENDBUF_SIZE 1024
@@ -23,11 +24,21 @@ static void parseslave_alive(char *msg, struct slave_channel *dev)
     while (token) {
         if (strncmp(token, "SERIALNUMBER=", 13) == 0){
             snprintf(dev->serial, sizeof(dev->serial), "%s", token + 13);
-            printf("[SLAVE] ACK from SERIALNUMBER : %s\n", dev->serial);
+            printf("[SLAVE] ACK SERIALNUMBER : %s\n", dev->serial);
         }
         else if (strncmp(token, "CHANNELID=", 10) == 0){
             dev->channel_id = atoi(token + 10);
-            printf("[SLAVE] ACK from CHANNELID : %d\n", dev->channel_id);
+            printf("[SLAVE] ACK CHANNELID : %d\n", dev->channel_id);
+        }
+        else if (strncmp(token, "ACKMSG=", 7) == 0){
+            printf("[SLAVE] ACK ACKMSG : %s\n", (token + 7));
+        }
+        else if (strncmp(token, "SLAVEKEY=", 9) == 0){
+            printf("[SLAVE] ACK SLAVEKEY : %s\n", (token + 9));
+        }
+        else if (strncmp(token, "USEABLE=", 8) == 0){
+            dev->useable = atoi(token + 8);
+            printf("[SLAVE] ACK USEABLE : %s\n", (token + 8));
         }
 
         token = strtok(NULL, ",");
@@ -54,8 +65,7 @@ void recv_alive_ack(int sock)
     parseslave_alive(buf, &chinfo);
     slave_key++;
 
-    printf("[SLAVE] ACK from %s: %s\n",
-           inet_ntoa(srv.sin_addr), buf);
+    printf("[SLAVE] ACK from == %s ==\n",  inet_ntoa(srv.sin_addr));
 }
 
 void alive_cb(struct uloop_timeout *t)
@@ -66,6 +76,7 @@ void alive_cb(struct uloop_timeout *t)
 
 void make_alivesocket(void)
 {
+    memset(&chinfo, 0, sizeof(chinfo));
     aliveslave_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (aliveslave_sock < 0) {
         perror("socket");
@@ -115,15 +126,54 @@ void send_alive(void)
     char msg[ALIVESENDBUF_SIZE];
     memset(&msg, 0, sizeof(msg));
 
-    const char *serialNumber = uci_get(gsystemmanager_cfg, "slave", "serialNumber");
-    const char *ksDeviceEmissionPower = uci_get(gsystemmanager_cfg, "slave", "ksDeviceEmissionPower");
-    const char *ksCertId = uci_get(gsystemmanager_cfg, "slave", "ksCertId");
-    const char *ksDeviceType = uci_get(gsystemmanager_cfg, "slave", "ksDeviceType");
-    const char *modelId = uci_get(gsystemmanager_cfg, "slave", "modelId");
-    const char *geo_lati = uci_get(gsystemmanager_cfg, "slave", "geo_lati");
-    const char *geo_long = uci_get(gsystemmanager_cfg, "slave", "geo_long");
-    const char *ant_heightType = uci_get(gsystemmanager_cfg, "slave", "ant_heightType");
-    const char *ant_height = uci_get(gsystemmanager_cfg, "slave", "ant_height");
+    // const char *serialNumber = uci_get(gsystemmanager_cfg, "slave", "serialNumber");
+    // const char *ksDeviceEmissionPower = uci_get(gsystemmanager_cfg, "slave", "ksDeviceEmissionPower");
+    // const char *ksCertId = uci_get(gsystemmanager_cfg, "slave", "ksCertId");
+    // const char *ksDeviceType = uci_get(gsystemmanager_cfg, "slave", "ksDeviceType");
+    // const char *modelId = uci_get(gsystemmanager_cfg, "slave", "modelId");
+    // const char *geo_lati = uci_get(gsystemmanager_cfg, "slave", "geo_lati");
+    // const char *geo_long = uci_get(gsystemmanager_cfg, "slave", "geo_long");
+    // const char *ant_heightType = uci_get(gsystemmanager_cfg, "slave", "ant_heightType");
+    // const char *ant_height = uci_get(gsystemmanager_cfg, "slave", "ant_height");
+
+    char serialNumber[64] = {0};
+    char ksDeviceEmissionPower[64] = {0};
+    char ksCertId[64] = {0};
+    char ksDeviceType[64] = {0};
+    char modelId[64] = {0};
+    char geo_lati[64] = {0};
+    char geo_long[64] = {0};
+    char ant_heightType[64] = {0};
+    char ant_height[64] = {0};
+
+    if (uci_get_value("system", "dev", "serialNumber", serialNumber, sizeof(serialNumber)) < 0) {
+        printf("[ERROR] failed serialNumber\n");
+    }
+    if (uci_get_value("system", "dev", "emissionPower", ksDeviceEmissionPower, sizeof(ksDeviceEmissionPower)) < 0) {
+        printf("[ERROR] failed ksDeviceEmissionPower\n");
+    }
+    if (uci_get_value("system", "dev", "ksCertId", ksCertId, sizeof(ksCertId)) < 0) {
+        printf("[ERROR] failed ksCertId\n");
+    }
+    if (uci_get_value("system", "dev", "deviceType", ksDeviceType, sizeof(ksDeviceType)) < 0) {
+        printf("[ERROR] failed ksDeviceType\n");
+    }
+    if (uci_get_value("system", "dev", "modelId", modelId, sizeof(modelId)) < 0) {
+        printf("[ERROR] failed modelId\n");
+    }
+    if (uci_get_value("paws", "global", "lati", geo_lati, sizeof(geo_lati)) < 0) {
+        printf("[ERROR] failed geo_lati\n");
+    }
+    if (uci_get_value("paws", "global", "long", geo_long, sizeof(geo_long)) < 0) {
+        printf("[ERROR] failed geo_long\n");
+    }
+    if (uci_get_value("paws", "dev", "ant_heightType", ant_heightType, sizeof(ant_heightType)) < 0) {
+        printf("[ERROR] failed ant_heightType\n");
+    }
+    if (uci_get_value("paws", "dev", "ant_height", ant_height, sizeof(ant_height)) < 0) {
+        printf("[ERROR] failed ant_height\n");
+    }
+    
 
     snprintf(msg, sizeof(msg),
             MSG_STR,
@@ -139,11 +189,12 @@ void send_alive(void)
             slave_key
     );
 
+    printf("[SLAVE] Alive send ==========================\n");
     sendto(aliveslave_sock, msg, strlen(msg), 0,
            (struct sockaddr *)&aliveslave_srv, sizeof(aliveslave_srv));
 
+    printf("[SLAVE] Alive recv ==========================\n");
     /* ACK 대기 */
     recv_alive_ack(aliveslave_sock);
 
-    printf("[SLAVE] Alive sent\n");
 }
